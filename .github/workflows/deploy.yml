@@ -10,80 +10,57 @@ permissions:
 
 jobs:
 
-#################################################
-# STAGE 1 - CHECKOUT
-#################################################
+  deploy:
 
-  checkout:
-    name: Checkout Source Code
+    name: Build and Deploy to k3s
+
     runs-on: self-hosted
 
     steps:
+
+      #################################################
+      # Checkout
+      #################################################
+
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-#################################################
-# STAGE 2 - BUILD DOCKER IMAGE
-#################################################
-
-  build:
-    name: Build Docker Image
-    runs-on: self-hosted
-    needs: checkout
-
-    steps:
-      - uses: actions/checkout@v4
+      #################################################
+      # Build Docker Image
+      #################################################
 
       - name: Build Docker Image
         run: |
           docker build -t hello-nginx:latest ./app
 
-#################################################
-# STAGE 3 - IMPORT IMAGE INTO K3S
-#################################################
-
-  import-image:
-    name: Import Image into k3s
-    runs-on: self-hosted
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v4
+      #################################################
+      # Export Image
+      #################################################
 
       - name: Export Docker Image
         run: |
           docker save hello-nginx:latest -o hello-nginx.tar
 
-      - name: Import Image
+      #################################################
+      # Import into k3s
+      #################################################
+
+      - name: Import Image into k3s
         run: |
           sudo k3s ctr images import hello-nginx.tar
 
-#################################################
-# STAGE 4 - DEPLOY TO K3S
-#################################################
+      #################################################
+      # Deploy
+      #################################################
 
-  deploy:
-    name: Deploy Application
-    runs-on: self-hosted
-    needs: import-image
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to k3s
+      - name: Deploy Application
         run: |
           sudo k3s kubectl apply -f kubernetes/hello-world.yaml
 
-#################################################
-# STAGE 5 - VERIFY DEPLOYMENT
-#################################################
+      #################################################
+      # Verify
+      #################################################
 
-  verify:
-    name: Verify Deployment
-    runs-on: self-hosted
-    needs: deploy
-
-    steps:
       - name: Verify Pods
         run: |
           sudo k3s kubectl get pods -n hello-world
@@ -92,16 +69,10 @@ jobs:
         run: |
           sudo k3s kubectl get svc -n hello-world
 
-#################################################
-# FINAL
-#################################################
+      #################################################
+      # Success
+      #################################################
 
-  success:
-    name: Pipeline Success
-    runs-on: self-hosted
-    needs: verify
-
-    steps:
       - name: Success
         run: |
           echo "====================================="
