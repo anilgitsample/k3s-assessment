@@ -1,0 +1,12 @@
+# Docker image archive
+app/*.tar
+
+# Python
+__pycache__/
+*.pyc
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store

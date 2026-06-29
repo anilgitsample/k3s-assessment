@@ -1,0 +1,75 @@
+# ==========================================
+# Namespace
+# ==========================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hello-world
+
+---
+# ==========================================
+# Nginx Deployment
+# ==========================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-nginx
+  namespace: hello-world
+  labels:
+    app: hello-nginx
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: hello-nginx
+
+  template:
+    metadata:
+      labels:
+        app: hello-nginx
+
+    spec:
+      containers:
+        - name: nginx
+
+          # Local Docker image
+          image: hello-nginx:latest
+
+          # Use local image instead of Docker Hub
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 80
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+
+---
+# ==========================================
+# Service
+# ==========================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-nginx-service
+  namespace: hello-world
+
+spec:
+  selector:
+    app: hello-nginx
+
+  type: NodePort
+
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      nodePort: 30080
